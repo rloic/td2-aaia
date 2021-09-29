@@ -6,6 +6,7 @@ use std::io::{stdin, stdout, Write};
 use std::collections::HashMap;
 
 type Node = usize;
+type Cost = i32;
 
 fn main() -> std::io::Result<()> {
     print!("Nombre de sommets : ");
@@ -42,10 +43,10 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn compute_distance(i: Node, s: Set, n: usize, cost: &Vec<Vec<i32>>, nb_call: &mut i32) -> i32 {
+fn compute_distance(i: Node, s: Set, n: usize, cost: &Vec<Vec<Cost>>, nb_call: &mut i32) -> Cost {
     *nb_call += 1;
     if s.is_empty() { cost[i][0] } else {
-        let mut min = i32::MAX;
+        let mut min = Cost::MAX;
         for j in s {
             let distance = compute_distance(j, s - j, n, cost, nb_call);
             if cost[i][j] + distance < min {
@@ -56,12 +57,12 @@ fn compute_distance(i: Node, s: Set, n: usize, cost: &Vec<Vec<i32>>, nb_call: &m
     }
 }
 
-fn compute_distance_mem(i: Node, s: Set, nb_nodes: usize, cost: &Vec<Vec<i32>>, mem: &mut Vec<Vec<Option<i32>>>) -> i32 {
+fn compute_distance_mem(i: Node, s: Set, nb_nodes: usize, cost: &Vec<Vec<Cost>>, mem: &mut Vec<Vec<Option<Cost>>>) -> Cost {
     if let Some(distance) = mem[i][s] {
         distance
     } else {
         let distance = if s.is_empty() { cost[i][0] } else {
-            let mut min = i32::MAX;
+            let mut min = Cost::MAX;
             for j in s {
                 let distance = compute_distance_mem(j, s - j, nb_nodes, cost, mem);
                 if cost[i][j] + distance < min {
@@ -75,7 +76,7 @@ fn compute_distance_mem(i: Node, s: Set, nb_nodes: usize, cost: &Vec<Vec<i32>>, 
     }
 }
 
-fn compute_iter(cost: &Vec<Vec<i32>>, s: Set, nb_nodes: usize) -> i32 {
+fn compute_iter(cost: &Vec<Vec<Cost>>, s: Set, nb_nodes: usize) -> Cost {
     let mut mem_d = vec![vec![0; 1 << (nb_nodes - 1)]; nb_nodes];
 
     for e in 0..1 << (nb_nodes - 1) {
@@ -84,7 +85,7 @@ fn compute_iter(cost: &Vec<Vec<i32>>, s: Set, nb_nodes: usize) -> i32 {
             if e.is_empty() {
                 mem_d[i][e] = cost[i][0];
             } else {
-                mem_d[i][e] = i32::MAX;
+                mem_d[i][e] = Cost::MAX;
                 for j in e {
                     if cost[i][j] + mem_d[j][(e - j)] < mem_d[i][e] {
                         mem_d[i][e] = cost[i][j] + mem_d[j][(e - j)];
@@ -94,7 +95,7 @@ fn compute_iter(cost: &Vec<Vec<i32>>, s: Set, nb_nodes: usize) -> i32 {
         }
     }
 
-    mem_d[0][s] = i32::MAX;
+    mem_d[0][s] = Cost::MAX;
     for j in s {
         if cost[0][j] + mem_d[j][(s - j)] < mem_d[0][s] {
             mem_d[0][s] = cost[0][j] + mem_d[j][(s - j)];
@@ -121,7 +122,7 @@ impl Edge {
     }
 }
 
-fn compute_iter_show_path(cost: &Vec<Vec<i32>>, s: Set, nb_nodes: usize) -> i32 {
+fn compute_iter_show_path(cost: &Vec<Vec<Cost>>, s: Set, nb_nodes: usize) -> Cost {
     let mut mem_d = vec![vec![0; 1 << (nb_nodes - 1)]; nb_nodes];
 
     let mut parent = HashMap::new();
@@ -132,7 +133,7 @@ fn compute_iter_show_path(cost: &Vec<Vec<i32>>, s: Set, nb_nodes: usize) -> i32 
             if e.is_empty() {
                 mem_d[i][e] = cost[i][0];
             } else {
-                mem_d[i][e] = i32::MAX;
+                mem_d[i][e] = Cost::MAX;
                 for j in e {
                     if cost[i][j] + mem_d[j][(e - j)] < mem_d[i][e] {
                         mem_d[i][e] = cost[i][j] + mem_d[j][(e - j)];
@@ -143,7 +144,7 @@ fn compute_iter_show_path(cost: &Vec<Vec<i32>>, s: Set, nb_nodes: usize) -> i32 
         }
     }
 
-    mem_d[0][s] = i32::MAX;
+    mem_d[0][s] = Cost::MAX;
     for j in s {
         if cost[0][j] + mem_d[j][(s - j)] < mem_d[0][s] {
             mem_d[0][s] = cost[0][j] + mem_d[j][(s - j)];
@@ -166,12 +167,12 @@ fn compute_iter_show_path(cost: &Vec<Vec<i32>>, s: Set, nb_nodes: usize) -> i32 
     mem_d[0][s]
 }
 
-fn next_rand(seed: i32) -> i32 {
+fn next_rand(seed: Cost) -> Cost {
     let i = 16807 * (seed % 127773) - 2836 * (seed / 127773);
     if i > 0 { i } else { 2147483647 + i }
 }
 
-fn create_costs(nb_elements: usize) -> Vec<Vec<i32>> {
+fn create_costs(nb_elements: usize) -> Vec<Vec<Cost>> {
     let max_cost = 1000;
     let mut iseed = 1;
     let mut cost = Vec::with_capacity(nb_elements);
